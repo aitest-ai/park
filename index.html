@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>夢幻遊樂園 (動態旋轉木馬版)</title>
+    <title>夢幻遊樂園 (獨立材質版)</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Microsoft JhengHei', sans-serif; background-color: #87CEEB; user-select: none; -webkit-user-select: none; }
         
@@ -80,7 +80,7 @@
 
     <div id="start-screen">
         <h1>DREAMLAND</h1>
-        <p class="subtitle">動態旋轉木馬版</p>
+        <p class="subtitle">設計師修正版</p>
         <button id="start-btn">開始創作</button>
     </div>
 
@@ -106,7 +106,7 @@
         import { getFirestore, collection, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Config
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'amusement-park-carousel-update';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'amusement-park-fix-material';
         let firebaseConfig;
         
         if (typeof __firebase_config !== 'undefined') {
@@ -207,9 +207,7 @@
         const rideStates = { carousel: false, ferris: false, teacups: false, coaster: false };
         let carouselRot, ferrisRot, cupRot, coasterCart;
         let coasterProgress = 0;
-        // [新增] 用於儲存馬匹物件以便動畫控制
         let carouselHorses = [];
-        // [新增] 用於計算時間和上下移動
         let time = 0;
 
         function createBrightMaterial() {
@@ -289,7 +287,7 @@
             group.add(btn); buttons.push(btn);
         }
 
-        // 1. Carousel (Updated)
+        // 1. Carousel (Fix: Unique Materials)
         function buildCarousel(x, z) {
             const group = new THREE.Group(); group.position.set(x, 0, z); scene.add(group);
             createConsole(x, z + 15, 0, 'carousel');
@@ -305,55 +303,50 @@
             const top = new THREE.Mesh(new THREE.ConeGeometry(10.5, 4, 32), new THREE.MeshStandardMaterial({ color: 0xFF6B6B }));
             top.position.y = 13; carouselRot.add(top);
 
-            // [修改] 更細緻的馬匹模型和初始化
-            const matBody = new THREE.MeshStandardMaterial({color: 0xffffff});
-            const matMane = new THREE.MeshStandardMaterial({color: 0xcc9966}); // 鬃毛顏色
+            const matMane = new THREE.MeshStandardMaterial({color: 0xcc9966});
 
             for(let i=0; i<8; i++) {
                 const angle = (i/8) * Math.PI*2; const px = Math.cos(angle) * 7; const pz = Math.sin(angle) * 7;
-                // 金色柱子
                 const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10), new THREE.MeshStandardMaterial({color:0xFFD700, metalness:0.8, roughness:0.2}));
                 pole.position.set(px, 5, pz); carouselRot.add(pole);
 
-                // 馬匹群組
                 const horse = new THREE.Group(); 
-                // 初始位置稍微調高，方便上下移動
                 horse.position.set(px, 3.5, pz); 
                 horse.rotation.y = -angle - Math.PI/2;
                 
-                // 身體 (可互動貼圖)
-                const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1.6, 4, 8), matBody);
+                // [關鍵修正] 在這裡建立新的材質實例，讓每隻馬都有獨立的材質球
+                const uniqueMatBody = new THREE.MeshStandardMaterial({color: 0xffffff});
+
+                // Body
+                const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1.6, 4, 8), uniqueMatBody);
                 body.rotation.z = Math.PI/2; body.userData = { id: `Carousel_Horse_${i}`, isInteractable: true, desc: '木馬' };
                 interactables.push(body); horse.add(body);
                 
-                // 脖子
-                const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 1.2, 4, 8), matBody); 
+                // Neck
+                const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 1.2, 4, 8), uniqueMatBody); 
                 neck.position.set(0.8, 0.8, 0); neck.rotation.z = -Math.PI/3; horse.add(neck);
                 
-                // 頭部 (組合幾何體)
+                // Head Group
                 const headGroup = new THREE.Group();
                 headGroup.position.set(1.3, 1.5, 0); headGroup.rotation.z = -0.2;
-                const headMain = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.7), matBody); headGroup.add(headMain);
-                const snout = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.5), matBody); snout.position.set(0.4, -0.1, 0); headGroup.add(snout);
+                const headMain = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.7), uniqueMatBody); headGroup.add(headMain);
+                const snout = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.5), uniqueMatBody); snout.position.set(0.4, -0.1, 0); headGroup.add(snout);
                 horse.add(headGroup);
 
-                // 鬃毛
+                // Mane & Tail
                 const mane = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 0.1), matMane);
                 mane.position.set(0.7, 1.0, 0); mane.rotation.z = -Math.PI/3; horse.add(mane);
-
-                // 尾巴
                 const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.2, 1), matMane);
                 tail.position.set(-1.0, 0.3, 0); tail.rotation.z = Math.PI/1.5; horse.add(tail);
 
-                // 腿部 (更有動態感)
+                // Legs
                 const legGeo = new THREE.CylinderGeometry(0.12, 0.1, 1.2);
-                const fl = new THREE.Mesh(legGeo, matBody); fl.position.set(0.6, -0.8, 0.25); fl.rotation.z = -0.4; horse.add(fl);
-                const fr = new THREE.Mesh(legGeo, matBody); fr.position.set(0.6, -0.8, -0.25); fr.rotation.z = -0.4; horse.add(fr);
-                const bl = new THREE.Mesh(legGeo, matBody); bl.position.set(-0.6, -0.8, 0.25); bl.rotation.z = 0.3; horse.add(bl);
-                const br = new THREE.Mesh(legGeo, matBody); br.position.set(-0.6, -0.8, -0.25); br.rotation.z = 0.3; horse.add(br);
+                const fl = new THREE.Mesh(legGeo, uniqueMatBody); fl.position.set(0.6, -0.8, 0.25); fl.rotation.z = -0.4; horse.add(fl);
+                const fr = new THREE.Mesh(legGeo, uniqueMatBody); fr.position.set(0.6, -0.8, -0.25); fr.rotation.z = -0.4; horse.add(fr);
+                const bl = new THREE.Mesh(legGeo, uniqueMatBody); bl.position.set(-0.6, -0.8, 0.25); bl.rotation.z = 0.3; horse.add(bl);
+                const br = new THREE.Mesh(legGeo, uniqueMatBody); br.position.set(-0.6, -0.8, -0.25); br.rotation.z = 0.3; horse.add(br);
 
                 carouselRot.add(horse);
-                // [新增] 將馬匹加入陣列以便動畫控制
                 carouselHorses.push(horse);
             }
         }
@@ -570,17 +563,13 @@
             requestAnimationFrame(animate);
             if(!isRunning) return;
 
-            // [新增] 累加時間
             time += 0.02;
 
             if(rideStates.carousel && carouselRot) {
-                // [修改] 逆時針旋轉
                 carouselRot.rotation.y -= 0.01;
-                // [新增] 馬匹上下移動迴圈
                 carouselHorses.forEach((horse, i) => {
-                    // 使用 sin 函數產生波動，i*0.8 讓每匹馬有相位差
-                    const yOffset = Math.sin(time + i * 0.8) * 0.4; 
-                    // 基礎高度 3.5 + 偏移量
+                    // [修改] 幅度放大到 1.2
+                    const yOffset = Math.sin(time + i * 0.8) * 1.2; 
                     horse.position.y = 3.5 + yOffset;
                 });
             }
@@ -637,14 +626,12 @@
                 targetObj = obj;
                 document.body.style.cursor = 'pointer'; 
                 
-                // [核心修改] 計算螢幕座標並移動 UI
                 const vec = hits[0].point.clone();
                 vec.project(camera);
                 const x = (vec.x * 0.5 + 0.5) * window.innerWidth;
                 const y = (-(vec.y * 0.5) + 0.5) * window.innerHeight;
 
                 promptEl.style.display = 'block';
-                // 設置提示框位置
                 promptEl.style.left = `${x}px`;
                 promptEl.style.top = `${y}px`; 
 
