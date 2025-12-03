@@ -3,45 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>夢幻遊樂園 (陽光燦爛版)</title>
+    <title>夢幻遊樂園 (滑鼠互動版)</title>
     <style>
-        /* 允許選取文字以便除錯，但防止拖曳時反白 */
         body { margin: 0; overflow: hidden; font-family: 'Microsoft JhengHei', sans-serif; background-color: #87CEEB; user-select: none; -webkit-user-select: none; }
         
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* 改為比較明亮的藍色漸層 */
-            color: #fff;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #555;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 2000; transition: opacity 0.8s ease-out;
         }
-        h1 { font-weight: 900; letter-spacing: 5px; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.2); font-size: 3.5em; color: #fff; }
-        .subtitle { letter-spacing: 3px; font-size: 1.2em; margin-top: 15px; text-transform: uppercase; color: #eee; }
+        h1 { font-weight: 900; letter-spacing: 5px; margin: 0; text-shadow: 2px 2px 0px #fff; font-size: 3.5em; color: #ff6b6b; }
+        .subtitle { letter-spacing: 3px; font-size: 1.2em; margin-top: 15px; text-transform: uppercase; color: #777; }
         
         #start-btn {
-            background: rgba(255,255,255,0.2); color: #fff; border: 2px solid #fff; padding: 15px 60px;
+            background: #fff; color: #ff6b6b; border: 2px solid #ff6b6b; padding: 15px 60px;
             font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 50px;
-            border-radius: 50px; transition: all 0.3s; box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(5px);
+            border-radius: 50px; transition: all 0.3s; box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
         }
-        #start-btn:hover { background: #fff; color: #00A8FF; transform: scale(1.05); }
+        #start-btn:hover { background: #ff6b6b; color: #fff; transform: translateY(-2px); }
 
-        /* UI 層設定 pointer-events: none 讓滑鼠可以穿透去操作 3D，但互動元素要開啟 auto */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         
+        /* 修改提示框樣式，讓它跟隨滑鼠或固定在明顯處，這裡改為固定在下方但更精簡 */
         #interaction-prompt {
-            position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.9); color: #00A8FF; padding: 12px 30px;
-            font-size: 16px; border-radius: 30px; border: 2px solid #00A8FF; font-weight: bold;
-            display: none; pointer-events: auto; cursor: pointer; /* 關鍵：允許點擊 */
-            box-shadow: 0 5px 25px rgba(0,0,0,0.2); transition: opacity 0.2s;
+            position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7); color: #fff; padding: 8px 20px;
+            font-size: 14px; border-radius: 20px; font-weight: bold;
+            display: none; pointer-events: none; /* 讓滑鼠穿透，因為我們現在直接點物件 */
+            transition: opacity 0.2s; backdrop-filter: blur(2px);
         }
-        #interaction-prompt:hover { background: #fff; transform: translateX(-50%) scale(1.05); }
 
         #status {
             position: absolute; top: 20px; left: 20px;
-            color: #fff; font-size: 14px; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-            display: none; font-weight: bold; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 15px;
+            color: #fff; font-size: 14px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            display: none; font-weight: bold; background: rgba(0,0,0,0.1); padding: 5px 10px; border-radius: 15px;
         }
 
         #controls-hint {
@@ -52,14 +49,14 @@
 
         #joystick-zone {
             position: absolute; bottom: 40px; left: 30px; width: 120px; height: 120px;
-            background: rgba(255,255,255,0.1); border-radius: 50%; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.2); border-radius: 50%; border: 2px solid rgba(255,255,255,0.5);
             pointer-events: auto; touch-action: none; display: none; backdrop-filter: blur(4px);
         }
         #joystick-knob {
             position: absolute; top: 50%; left: 50%; width: 50px; height: 50px;
-            background: rgba(255,255,255,0.8); border-radius: 50%;
+            background: #fff; border-radius: 50%;
             transform: translate(-50%, -50%); pointer-events: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         #look-zone {
             position: absolute; top: 0; right: 0; width: 50%; height: 100%;
@@ -73,18 +70,18 @@
 
     <div id="start-screen">
         <h1>DREAMLAND</h1>
-        <p class="subtitle">陽光遊樂園</p>
-        <button id="start-btn">入園遊玩</button>
+        <p class="subtitle">滑鼠互動版</p>
+        <button id="start-btn">開始創作</button>
     </div>
 
     <div id="ui-layer">
-        <div id="status">● 連線中...</div>
+        <div id="status">● 準備就緒</div>
         <div id="interaction-prompt">✨ 互動</div>
         <div id="controls-hint">
             <b>操作說明</b><br>
             移動：WASD 或 方向鍵<br>
             視角：按住滑鼠左鍵拖曳<br>
-            互動：滑鼠點擊按鈕
+            互動：滑鼠直接點擊物件
         </div>
     </div>
 
@@ -99,13 +96,13 @@
         import { getFirestore, collection, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Config
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'amusement-park-ultimate';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'amusement-park-hover';
         let firebaseConfig;
         
         if (typeof __firebase_config !== 'undefined') {
             firebaseConfig = JSON.parse(__firebase_config);
         } else {
-            // [GitHub Pages 部署設定]
+            // [GitHub Pages]
             firebaseConfig = {
                 apiKey: "AIzaSyCuA_Qb-pRaM0vE0-waF2Ck2aBSgq9zB2Y",
                 authDomain: "park-de7a6.firebaseapp.com",
@@ -115,29 +112,21 @@
                 appId: "1:557277383172:web:2dabb044dd651541430351",
                 measurementId: "G-CD0ESBXH0Y"
             };
-            console.log("使用自定義 Firebase 設定");
         }
 
         let app, auth, db;
-        let isFirebaseReady = false;
         try {
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-            isFirebaseReady = true;
-        } catch(e) { 
-            console.warn("Firebase 初始化失敗，將以離線模式運行:", e); 
-        }
+        } catch(e) { console.warn("Offline Mode"); }
 
         let currentUser = null;
         let myColor = new THREE.Color().setHSL(Math.random(), 0.8, 0.5).getHexString();
         let isRunning = false;
 
-        // Keys State
-        const keys = {
-            w: false, a: false, s: false, d: false,
-            arrowup: false, arrowdown: false, arrowleft: false, arrowright: false
-        };
+        // Keys
+        const keys = { w: false, a: false, s: false, d: false, arrowup: false, arrowdown: false, arrowleft: false, arrowright: false };
 
         // UI Refs
         const startScreen = document.getElementById('start-screen');
@@ -149,82 +138,49 @@
         const joystickKnob = document.getElementById('joystick-knob');
         const lookZone = document.getElementById('look-zone');
 
-        // --- 材質 ---
+        // Textures
         function createGrassTex() {
             const s=512; const c=document.createElement('canvas'); c.width=s; c.height=s;
             const ctx=c.getContext('2d');
-            // 地板稍微亮一點
-            ctx.fillStyle='#4caf50'; ctx.fillRect(0,0,s,s); 
-            for(let i=0;i<15000;i++){
-                ctx.fillStyle = Math.random()>0.5 ? '#43a047' : '#66bb6a';
-                const x=Math.random()*s, y=Math.random()*s, l=Math.random()*3+1;
-                ctx.fillRect(x,y,2,l);
+            ctx.fillStyle='#66bb6a'; ctx.fillRect(0,0,s,s); 
+            for(let i=0;i<20000;i++){
+                ctx.fillStyle = Math.random()>0.5 ? '#81c784' : '#4caf50';
+                ctx.fillRect(Math.random()*s,Math.random()*s,2,2);
             }
             const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(40,40);
-            t.colorSpace = THREE.SRGBColorSpace; // 確保顏色正確
-            return t;
+            t.colorSpace = THREE.SRGBColorSpace; return t;
         }
         function createWallTex() {
             const s=256; const c=document.createElement('canvas'); c.width=s; c.height=s;
             const ctx=c.getContext('2d');
-            ctx.fillStyle='#777'; ctx.fillRect(0,0,s,s); // 牆壁也調亮一點
-            ctx.fillStyle='#666';
+            ctx.fillStyle='#f5f5f5'; ctx.fillRect(0,0,s,s);
+            ctx.fillStyle='#e0e0e0';
             for(let i=0; i<10; i++) { ctx.fillRect(0, i*25.6, s, 2); ctx.fillRect(i*25.6, 0, 2, s); }
             const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(10,10);
-            t.colorSpace = THREE.SRGBColorSpace;
-            return t;
+            t.colorSpace = THREE.SRGBColorSpace; return t;
         }
 
-        // Start
         startBtn.addEventListener('click', async () => {
-            if (!isFirebaseReady && window.location.hostname !== 'localhost' && !window.location.hostname.includes('googleusercontent')) {
-                 alert("提示：Firebase 尚未正確設定。您將以離線模式進入。");
-            }
-
             startScreen.style.opacity = 0;
             setTimeout(() => startScreen.style.display='none', 600);
             statusEl.style.display='block';
             joystickZone.style.display='block';
             lookZone.style.display='block';
-            
-            if(!isRunning) { 
-                init3D(); 
-                isRunning = true; 
-                initAuth(); 
-            }
+            if(!isRunning) { init3D(); isRunning = true; initAuth(); }
         });
 
         function isMobile() { return /Android|iPhone|iPad/i.test(navigator.userAgent); }
-        
         async function initAuth() {
             if(!auth) return;
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch(e){
-                console.error("登入失敗:", e);
-                statusEl.innerText = "● 離線模式";
-                statusEl.style.color = "#FFD700";
-            }
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                else await signInAnonymously(auth);
+            } catch(e){}
         }
-        
-        if(auth) {
-            onAuthStateChanged(auth, u => { 
-                if(u) { 
-                    currentUser=u; 
-                    statusEl.innerText="● 線上"; 
-                    statusEl.style.color="#fff"; 
-                    startNetworkSync(); 
-                } 
-            });
-        }
+        if(auth) onAuthStateChanged(auth, u => { if(u) { currentUser=u; statusEl.innerText="● 線上設計中"; startNetworkSync(); } });
 
-        // 3D Vars
+        // 3D
         let scene, camera, renderer;
-        let otherPlayers = {};
         let interactables = [];
         let buttons = [];
         let colliders = [];
@@ -234,26 +190,23 @@
         let lookEuler = new THREE.Euler(0,0,0,'YXZ');
         let joystickActive=false, lookActive=false, lastLookX=0, lastLookY=0;
         let isDragging = false;
+        
+        // [新增] 滑鼠座標與點擊鎖定
+        const mouse = new THREE.Vector2();
+        let mouseMovedSinceClick = false;
 
         const rideStates = { carousel: false, ferris: false, teacups: false, coaster: false };
         let carouselRot, ferrisRot, cupRot, coasterCart;
         let coasterProgress = 0;
 
-        // ** 修改：純白亮材質 (White Material Helper) **
         function createBrightMaterial() {
-            return new THREE.MeshStandardMaterial({ 
-                color: 0xffffff, // 純白
-                roughness: 0.5,  // 適度粗糙，避免像鏡子一樣黑
-                metalness: 0.0,  // 金屬度 0，避免變暗
-                side: THREE.DoubleSide
-                // 移除 emissive，改用強光照亮
-            });
+            return new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0.1, side: THREE.DoubleSide });
         }
 
         function init3D() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB); // 天空藍
-            scene.fog = new THREE.Fog(0x87CEEB, 20, 200);
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 20, 250);
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 300);
             camera.rotation.order = 'YXZ';
@@ -265,38 +218,19 @@
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             renderer.outputEncoding = THREE.SRGBColorSpace;
-            
-            // ** 關鍵：開啟 ToneMapping 讓亮部不過曝，讓畫面更像陽光下的攝影 **
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.0; 
-
+            renderer.toneMappingExposure = 1.1; 
             document.body.appendChild(renderer.domElement);
 
-            // ** 關鍵：燈光增強 **
-            // 1. 環境光加強 (讓陰影處變亮)
-            const ambient = new THREE.AmbientLight(0xffffff, 1.2); 
-            scene.add(ambient);
-
-            // 2. 太陽光大幅增強 (模擬烈日)
-            const sun = new THREE.DirectionalLight(0xfffaed, 3.5); 
-            sun.position.set(50, 80, 50); 
-            sun.castShadow = true;
-            sun.shadow.mapSize.set(2048,2048);
-            sun.shadow.bias = -0.0005; // 減少陰影紋路
+            const ambient = new THREE.AmbientLight(0xffffff, 1.3); scene.add(ambient);
+            const sun = new THREE.DirectionalLight(0xfffaed, 3.0); 
+            sun.position.set(50, 100, 50); sun.castShadow = true;
+            sun.shadow.mapSize.set(2048,2048); sun.shadow.bias = -0.0005;
             scene.add(sun);
+            const fill = new THREE.DirectionalLight(0xddeeff, 1.0); fill.position.set(-50, 30, -50); scene.add(fill);
 
-            // 3. 補光
-            const fill = new THREE.DirectionalLight(0xddeeff, 0.8);
-            fill.position.set(-50, 30, -50); 
-            scene.add(fill);
-
-            // ** 視覺上的太陽 (裝飾用) **
-            const sunMesh = new THREE.Mesh(
-                new THREE.SphereGeometry(5, 16, 16),
-                new THREE.MeshBasicMaterial({ color: 0xffff00 })
-            );
-            sunMesh.position.copy(sun.position).multiplyScalar(0.8); // 放在光源方向
-            scene.add(sunMesh);
+            const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffaa }));
+            sunMesh.position.copy(sun.position).multiplyScalar(0.8); scene.add(sunMesh);
 
             buildPark();
 
@@ -311,7 +245,6 @@
             const floor = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), floorMat);
             floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
 
-            // Walls (Boundaries)
             const wallMat = new THREE.MeshStandardMaterial({ map: createWallTex(), roughness: 0.9 });
             const wallGeo = new THREE.PlaneGeometry(300, 20);
             const w1 = new THREE.Mesh(wallGeo, wallMat); w1.position.set(0, 10, -150); scene.add(w1);
@@ -320,14 +253,11 @@
             const w4 = new THREE.Mesh(wallGeo, wallMat); w4.position.set(150, 10, 0); w4.rotation.y=-Math.PI/2; scene.add(w4);
             colliders.push(new THREE.Box3().setFromObject(w1), new THREE.Box3().setFromObject(w2), new THREE.Box3().setFromObject(w3), new THREE.Box3().setFromObject(w4));
 
-            // Pathways - Light Grey
-            const pathMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.8 });
-            const path1 = new THREE.Mesh(new THREE.PlaneGeometry(10, 200), pathMat);
-            path1.rotation.x = -Math.PI/2; path1.position.y = 0.05; path1.receiveShadow=true;
-            scene.add(path1);
-            const path2 = new THREE.Mesh(new THREE.PlaneGeometry(200, 10), pathMat);
-            path2.rotation.x = -Math.PI/2; path2.position.y = 0.06; path2.receiveShadow=true;
-            scene.add(path2);
+            const pathMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
+            const path1 = new THREE.Mesh(new THREE.PlaneGeometry(12, 200), pathMat);
+            path1.rotation.x = -Math.PI/2; path1.position.y = 0.05; path1.receiveShadow=true; scene.add(path1);
+            const path2 = new THREE.Mesh(new THREE.PlaneGeometry(200, 12), pathMat);
+            path2.rotation.x = -Math.PI/2; path2.position.y = 0.06; path2.receiveShadow=true; scene.add(path2);
 
             buildCarousel(0, 0);
             buildFerrisWheel(-70, 0); 
@@ -336,253 +266,146 @@
         }
 
         function createConsole(x, z, ry, id) {
-            const group = new THREE.Group();
-            group.position.set(x, 0, z);
-            group.rotation.y = ry;
-            scene.add(group);
-
-            const stand = new THREE.Mesh(new THREE.BoxGeometry(1, 1.2, 0.5), new THREE.MeshStandardMaterial({color:0x444}));
-            stand.position.y = 0.6;
-            group.add(stand);
-            colliders.push(new THREE.Box3().setFromObject(stand));
-
-            const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.8), new THREE.MeshStandardMaterial({color:0x666}));
-            box.position.set(0, 1.2, 0.2); box.rotation.x = 0.5;
-            group.add(box);
-
-            const btnGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16);
-            const btnMat = new THREE.MeshStandardMaterial({ color: 0x00FF00, emissive: 0x004400 });
-            const btn = new THREE.Mesh(btnGeo, btnMat);
-            btn.position.set(0, 1.5, 0.3); btn.rotation.x = 0.5;
-            btn.userData = { isButton: true, rideId: id };
-            group.add(btn);
-            buttons.push(btn);
+            const group = new THREE.Group(); group.position.set(x, 0, z); group.rotation.y = ry; scene.add(group);
+            const stand = new THREE.Mesh(new THREE.BoxGeometry(1, 1.2, 0.5), new THREE.MeshStandardMaterial({color:0x333}));
+            stand.position.y = 0.6; group.add(stand); colliders.push(new THREE.Box3().setFromObject(stand));
+            const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.8), new THREE.MeshStandardMaterial({color:0x555}));
+            box.position.set(0, 1.2, 0.2); box.rotation.x = 0.5; group.add(box);
+            const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16), new THREE.MeshStandardMaterial({ color: 0x00FF00, emissive: 0x004400 }));
+            btn.position.set(0, 1.5, 0.3); btn.rotation.x = 0.5; btn.userData = { isButton: true, rideId: id };
+            group.add(btn); buttons.push(btn);
         }
 
-        // --- 1. Carousel ---
+        // 1. Carousel
         function buildCarousel(x, z) {
             const group = new THREE.Group(); group.position.set(x, 0, z); scene.add(group);
             createConsole(x, z + 15, 0, 'carousel');
-
             const base = new THREE.Mesh(new THREE.CylinderGeometry(10, 11, 1, 32), new THREE.MeshStandardMaterial({ color: 0x8B4513 }));
             base.position.y = 0.5; base.receiveShadow = true; group.add(base);
-
-            const center = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 10, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.8, roughness: 0.1 }));
-            center.position.y = 5; group.add(center);
-            colliders.push(new THREE.Box3().setFromObject(center));
-
+            const center = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 10, 32), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+            center.position.y = 5; group.add(center); colliders.push(new THREE.Box3().setFromObject(center));
             carouselRot = new THREE.Group(); group.add(carouselRot);
             
-            // Canopy - Use bright material
-            const canopy = new THREE.Mesh(
-                new THREE.CylinderGeometry(10, 10, 2.5, 32, 1, true),
-                createBrightMaterial()
-            );
-            canopy.position.y = 10; 
-            canopy.userData = { id: 'Carousel_Canopy', isInteractable: true, desc: '頂棚' };
+            const canopy = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, 2.5, 32, 1, true), createBrightMaterial());
+            canopy.position.y = 10; canopy.userData = { id: 'Carousel_Canopy', isInteractable: true, desc: '頂棚' };
             carouselRot.add(canopy); interactables.push(canopy);
-
             const top = new THREE.Mesh(new THREE.ConeGeometry(10.5, 4, 32), new THREE.MeshStandardMaterial({ color: 0xFF6B6B }));
             top.position.y = 13; carouselRot.add(top);
 
             for(let i=0; i<8; i++) {
-                const angle = (i/8) * Math.PI*2;
-                const px = Math.cos(angle) * 7; const pz = Math.sin(angle) * 7;
+                const angle = (i/8) * Math.PI*2; const px = Math.cos(angle) * 7; const pz = Math.sin(angle) * 7;
                 const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10), new THREE.MeshStandardMaterial({color:0xFFD700}));
                 pole.position.set(px, 5, pz); carouselRot.add(pole);
-
-                const horse = new THREE.Group();
-                horse.position.set(px, 2.5 + (i%2)*0.5, pz);
-                horse.rotation.y = -angle - Math.PI/2;
-                
-                const matBody = new THREE.MeshStandardMaterial({color: 0xffffff}); // 白馬
+                const horse = new THREE.Group(); horse.position.set(px, 2.5 + (i%2)*0.5, pz); horse.rotation.y = -angle - Math.PI/2;
+                const matBody = new THREE.MeshStandardMaterial({color: 0xffffff});
                 const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1.5, 4, 8), matBody);
-                body.rotation.z = Math.PI/2;
-                body.userData = { id: `Carousel_Horse_${i}`, isInteractable: true, desc: '木馬' };
+                body.rotation.z = Math.PI/2; body.userData = { id: `Carousel_Horse_${i}`, isInteractable: true, desc: '木馬' };
                 interactables.push(body);
-                
-                const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 1, 4, 8), matBody); neck.position.set(0.6, 0.8, 0); neck.rotation.z = -Math.PI/4;
-                const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.7), matBody); head.position.set(0.9, 1.4, 0); head.rotation.z = -0.2;
-                const leg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1), matBody); leg1.position.set(0.5, -0.8, 0.2); leg1.rotation.z = -0.3;
-                const leg2 = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1), matBody); leg2.position.set(0.5, -0.8, -0.2); leg2.rotation.z = -0.3;
-                const leg3 = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1), matBody); leg3.position.set(-0.5, -0.8, 0.2); leg3.rotation.z = 0.2;
-                const leg4 = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1), matBody); leg4.position.set(-0.5, -0.8, -0.2); leg4.rotation.z = 0.2;
-
-                horse.add(body); horse.add(neck); horse.add(head); horse.add(leg1); horse.add(leg2); horse.add(leg3); horse.add(leg4);
+                horse.add(body);
+                const hParts = [
+                    {g:new THREE.CapsuleGeometry(0.3, 1, 4, 8), p:[0.6, 0.8, 0], r:[0,0,-0.78]},
+                    {g:new THREE.BoxGeometry(0.4, 0.4, 0.7), p:[0.9, 1.4, 0], r:[0,0,-0.2]},
+                    {g:new THREE.CylinderGeometry(0.1, 0.1, 1), p:[0.5, -0.8, 0.2], r:[0,0,-0.3]},
+                    {g:new THREE.CylinderGeometry(0.1, 0.1, 1), p:[0.5, -0.8, -0.2], r:[0,0,-0.3]},
+                    {g:new THREE.CylinderGeometry(0.1, 0.1, 1), p:[-0.5, -0.8, 0.2], r:[0,0,0.2]},
+                    {g:new THREE.CylinderGeometry(0.1, 0.1, 1), p:[-0.5, -0.8, -0.2], r:[0,0,0.2]}
+                ];
+                hParts.forEach(pt => { const m = new THREE.Mesh(pt.g, matBody); m.position.set(...pt.p); m.rotation.set(...pt.r); horse.add(m); });
                 carouselRot.add(horse);
             }
         }
 
-        // --- 2. Ferris Wheel ---
+        // 2. Ferris Wheel
         function buildFerrisWheel(x, z) {
-            const group = new THREE.Group(); 
-            group.position.set(x, -2, z); 
-            group.rotation.y = Math.PI / 4; 
-            scene.add(group);
-            
-            const cx = x + 25 * Math.sin(Math.PI/4);
-            const cz = z + 25 * Math.cos(Math.PI/4);
+            const group = new THREE.Group(); group.position.set(x, -2, z); group.rotation.y = Math.PI / 4; scene.add(group);
+            const cx = x + 25 * Math.sin(Math.PI/4); const cz = z + 25 * Math.cos(Math.PI/4);
             createConsole(cx, cz, Math.PI/4 + Math.PI, 'ferris');
-
             const trussMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
-            const legG = new THREE.Group();
             const l1 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 32), trussMat); l1.position.set(0, 15, 8); l1.rotation.x = -0.5;
             const l2 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 32), trussMat); l2.position.set(0, 15, -8); l2.rotation.x = 0.5;
-            legG.add(l1); legG.add(l2);
-            const legG2 = legG.clone(); legG.position.x = -2; legG2.position.x = 2; 
-            group.add(legG); group.add(legG2);
+            const legG = new THREE.Group(); legG.add(l1); legG.add(l2);
+            const legG2 = legG.clone(); legG.position.x = -2; legG2.position.x = 2; group.add(legG); group.add(legG2);
             colliders.push(new THREE.Box3().setFromObject(l1));
-
-            const axle = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 6), trussMat); axle.rotation.z = Math.PI/2; axle.position.y = 28; group.add(axle);
             ferrisRot = new THREE.Group(); ferrisRot.position.y = 28; group.add(ferrisRot);
-
             const rimGeo = new THREE.TorusGeometry(20, 0.5, 16, 64); const rimMat = new THREE.MeshStandardMaterial({color: 0xFF4081});
-            const rim1 = new THREE.Mesh(rimGeo, rimMat); rim1.position.x = 1.5; rim1.rotation.y = Math.PI/2;
-            const rim2 = new THREE.Mesh(rimGeo, rimMat); rim2.position.x = -1.5; rim2.rotation.y = Math.PI/2;
-            ferrisRot.add(rim1); ferrisRot.add(rim2);
-
+            const r1 = new THREE.Mesh(rimGeo, rimMat); r1.position.x = 1.5; r1.rotation.y = Math.PI/2; ferrisRot.add(r1);
+            const r2 = new THREE.Mesh(rimGeo, rimMat); r2.position.x = -1.5; r2.rotation.y = Math.PI/2; ferrisRot.add(r2);
             for(let i=0; i<12; i++) {
                 const a = (i/12)*Math.PI*2;
                 const spk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 20), trussMat); spk.position.set(0, Math.sin(a)*10, Math.cos(a)*10); spk.rotation.x = -a; ferrisRot.add(spk);
                 const pivot = new THREE.Group(); pivot.position.set(0, Math.sin(a)*20, Math.cos(a)*20); ferrisRot.add(pivot);
-                
-                const cabGeo = new THREE.BoxGeometry(3, 3, 3); 
-                const cabMat = createBrightMaterial();
-                const cab = new THREE.Mesh(cabGeo, cabMat);
-                const win = new THREE.Mesh(new THREE.BoxGeometry(3.1, 1.5, 3.1), new THREE.MeshStandardMaterial({color:0x87CEEB, transparent:true, opacity:0.5})); cab.add(win);
-                cab.userData = { id: `Ferris_Cab_${i}`, isInteractable: true, desc: '車廂' };
-                pivot.add(cab); interactables.push(cab);
-                pivot.userData.isCabinPivot = true;
+                const cab = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), createBrightMaterial());
+                cab.userData = { id: `Ferris_Cab_${i}`, isInteractable: true, desc: '車廂' }; pivot.add(cab); interactables.push(cab); pivot.userData.isCabinPivot = true;
             }
         }
 
-        // --- 3. Tea Cups (TEAPOT) ---
+        // 3. Tea Cups
         function buildTeaCups(x, z) {
             const group = new THREE.Group(); group.position.set(x, 0, z); scene.add(group);
             createConsole(x - 15, z, Math.PI/2, 'teacups');
-
             const base = new THREE.Mesh(new THREE.CylinderGeometry(14, 15, 1, 64), new THREE.MeshStandardMaterial({ color: 0x9C27B0 }));
             base.position.y = 0.5; base.receiveShadow=true; group.add(base);
-
-            // **Central Teapot**
-            const teapotG = new THREE.Group();
-            teapotG.position.y = 4;
-            group.add(teapotG);
-            
+            const teapotG = new THREE.Group(); teapotG.position.y = 4; group.add(teapotG);
             const brightMat = createBrightMaterial(); 
-            const potBody = new THREE.Mesh(new THREE.SphereGeometry(3.5, 32, 32), brightMat);
-            potBody.scale.y = 0.8; 
-            potBody.userData = { id: 'TeaPot_Center', isInteractable: true, desc: '大茶壺' };
-            interactables.push(potBody);
-            teapotG.add(potBody);
-            colliders.push(new THREE.Box3().setFromObject(potBody));
-
-            // Spout
-            const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 3), brightMat);
-            spout.position.set(3.2, 1, 0); spout.rotation.z = -Math.PI/3; teapotG.add(spout);
-            // Handle
-            const handle = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.3, 16, 32, Math.PI), brightMat);
-            handle.position.set(-2.8, 0, 0); 
-            handle.rotation.z = -Math.PI/2; handle.rotation.y = Math.PI; teapotG.add(handle);
-            // Lid
-            const lid = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.2, 0.5), new THREE.MeshStandardMaterial({color:0x9C27B0}));
-            lid.position.y = 2.5; teapotG.add(lid);
-
+            const pot = new THREE.Mesh(new THREE.SphereGeometry(3.5, 32, 32), brightMat); pot.scale.y = 0.8; 
+            pot.userData = { id: 'TeaPot_Center', isInteractable: true, desc: '大茶壺' }; interactables.push(pot); teapotG.add(pot); colliders.push(new THREE.Box3().setFromObject(pot));
+            const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 3), brightMat); spout.position.set(3.2, 1, 0); spout.rotation.z = -Math.PI/3; teapotG.add(spout);
+            const hdl = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.3, 16, 32, Math.PI), brightMat); hdl.position.set(-2.8, 0, 0); hdl.rotation.z = -Math.PI/2; hdl.rotation.y = Math.PI; teapotG.add(hdl);
+            const lid = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.2, 0.5), new THREE.MeshStandardMaterial({color:0x9C27B0})); lid.position.y = 2.5; teapotG.add(lid);
             cupRot = new THREE.Group(); group.add(cupRot);
-
             for(let i=0; i<4; i++) {
-                const a = (i/4) * Math.PI * 2;
-                const cupG = new THREE.Group();
-                cupG.position.set(Math.cos(a)*8, 1, Math.sin(a)*8);
-                cupRot.add(cupG);
-
-                const saucer = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.5, 0.2, 32), new THREE.MeshStandardMaterial({color: 0xFFD54F}));
-                cupG.add(saucer);
-
-                const cupGeo = new THREE.CylinderGeometry(2.5, 1.8, 2.5, 32);
-                const cupMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-                const cup = new THREE.Mesh(cupGeo, cupMat);
-                cup.position.y = 1.3;
-                const h = new THREE.Mesh(new THREE.TorusGeometry(1, 0.2, 8, 16), new THREE.MeshStandardMaterial({color:0xffffff}));
-                h.position.set(2.5, 0, 0); h.rotation.z = Math.PI/2; cup.add(h);
-
-                cup.userData = { id: `TeaCup_${i}`, isInteractable: true, spinSpeed: (Math.random()+1)*0.05, desc: '咖啡杯' };
-                cupG.add(cup); interactables.push(cup);
+                const a = (i/4) * Math.PI * 2; const cupG = new THREE.Group(); cupG.position.set(Math.cos(a)*8, 1, Math.sin(a)*8); cupRot.add(cupG);
+                const s = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.5, 0.2, 32), new THREE.MeshStandardMaterial({color: 0xFFD54F})); cupG.add(s);
+                const cup = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 1.8, 2.5, 32), createBrightMaterial()); cup.position.y = 1.3;
+                const ch = new THREE.Mesh(new THREE.TorusGeometry(1, 0.2, 8, 16), createBrightMaterial()); ch.position.set(2.5, 0, 0); ch.rotation.z = Math.PI/2; cup.add(ch);
+                cup.userData = { id: `TeaCup_${i}`, isInteractable: true, spinSpeed: (Math.random()+1)*0.05, desc: '咖啡杯' }; cupG.add(cup); interactables.push(cup);
             }
         }
 
-        // --- 4. Roller Coaster ---
+        // 4. Roller Coaster
         function buildRollerCoaster(x, z) {
             const group = new THREE.Group(); group.position.set(x, 0, z); scene.add(group);
             createConsole(x, z + 25, 0, 'coaster');
-
-            const pts = [
-                new THREE.Vector3(-40, 5, 0), new THREE.Vector3(-30, 30, 0), new THREE.Vector3(0, 20, 20),
-                new THREE.Vector3(30, 40, 0), new THREE.Vector3(40, 15, -10), new THREE.Vector3(0, 10, -20),
-                new THREE.Vector3(-40, 5, 0)
-            ];
+            const pts = [new THREE.Vector3(-40, 5, 0), new THREE.Vector3(-30, 30, 0), new THREE.Vector3(0, 20, 20), new THREE.Vector3(30, 40, 0), new THREE.Vector3(40, 15, -10), new THREE.Vector3(0, 10, -20), new THREE.Vector3(-40, 5, 0)];
             const curve = new THREE.CatmullRomCurve3(pts, true);
-            const railMat = new THREE.MeshStandardMaterial({ color: 0xFF0000 });
-            const track = new THREE.Mesh(new THREE.TubeGeometry(curve, 100, 0.5, 8, true), railMat);
-            group.add(track);
+            const track = new THREE.Mesh(new THREE.TubeGeometry(curve, 100, 0.5, 8, true), new THREE.MeshStandardMaterial({ color: 0xFF0000 })); group.add(track);
+            curve.getPoints(15).forEach(p => { if(p.y>3) { const s = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, p.y), new THREE.MeshStandardMaterial({color:0x444})); s.position.set(p.x, p.y/2, p.z); group.add(s); }});
 
-            const ptsList = curve.getPoints(15);
-            ptsList.forEach(p => {
-                if(p.y > 3) {
-                    const sup = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, p.y), new THREE.MeshStandardMaterial({color:0x444}));
-                    sup.position.set(p.x, p.y/2, p.z); group.add(sup);
-                }
-            });
-
-            coasterCart = new THREE.Group();
-            coasterCart.userData = { path: curve };
-            group.add(coasterCart);
-
+            coasterCart = new THREE.Group(); coasterCart.userData = { path: curve }; group.add(coasterCart);
             const carGroup = new THREE.Group();
-            const chassis = new THREE.Mesh(new THREE.BoxGeometry(4, 0.5, 6), new THREE.MeshStandardMaterial({color:0x333}));
-            carGroup.add(chassis);
             
-            const bodyGeo = new THREE.BoxGeometry(4.2, 3, 6.2);
-            const bodyMat = new THREE.MeshStandardMaterial({color: 0x0000FF});
+            const chassis = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.5, 7.5), new THREE.MeshStandardMaterial({color:0x222}));
+            chassis.position.y = 0.25; carGroup.add(chassis);
+
+            const bodyGeo = new THREE.BoxGeometry(4.2, 2.5, 7); 
+            const bodyMat = createBrightMaterial();
             const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 1.5;
-            carGroup.add(body);
-            
-            const sidePanel = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 2.5), createBrightMaterial());
-            sidePanel.position.set(2.15, 1.5, 0); 
-            sidePanel.rotation.y = Math.PI/2;
-            sidePanel.userData = { id: 'Coaster_Cart', isInteractable: true, desc: '車廂' };
-            interactables.push(sidePanel);
-            carGroup.add(sidePanel);
+            body.position.y = 1.75; 
+            body.userData = { id: 'Coaster_Body', isInteractable: true, desc: '車身' }; 
+            interactables.push(body); carGroup.add(body);
 
-            const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.2); const wheelMat = new THREE.MeshStandardMaterial({color:0x111});
-            const w1 = new THREE.Mesh(wheelGeo, wheelMat); w1.rotation.z=Math.PI/2; w1.position.set(2.1, -0.2, 2);
-            const w2 = new THREE.Mesh(wheelGeo, wheelMat); w2.rotation.z=Math.PI/2; w2.position.set(-2.1, -0.2, 2);
-            const w3 = new THREE.Mesh(wheelGeo, wheelMat); w3.rotation.z=Math.PI/2; w3.position.set(2.1, -0.2, -2);
-            const w4 = new THREE.Mesh(wheelGeo, wheelMat); w4.rotation.z=Math.PI/2; w4.position.set(-2.1, -0.2, -2);
-            carGroup.add(w1); carGroup.add(w2); carGroup.add(w3); carGroup.add(w4);
+            const nose = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 4.2, 32, 1, false, 0, Math.PI), createBrightMaterial());
+            nose.rotation.z = Math.PI/2; nose.position.set(0, 1.75, 3.5); carGroup.add(nose);
 
-            carGroup.position.y = 1.2;
+            const seat = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 5), new THREE.MeshStandardMaterial({color: 0x888}));
+            seat.position.set(0, 2, 0); carGroup.add(seat);
+
+            const railGeo = new THREE.CylinderGeometry(0.1, 0.1, 5);
+            const railMat = new THREE.MeshStandardMaterial({color: 0xcccccc, metalness: 0.8, roughness: 0.2});
+            const rL = new THREE.Mesh(railGeo, railMat); rL.rotation.x=Math.PI/2; rL.position.set(1.8, 3.2, 0); carGroup.add(rL);
+            const rR = new THREE.Mesh(railGeo, railMat); rR.rotation.x=Math.PI/2; rR.position.set(-1.8, 3.2, 0); carGroup.add(rR);
+
+            const wGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.4); const wMat = new THREE.MeshStandardMaterial({color:0x111});
+            const poses = [[2.3, 0, 2.5], [-2.3, 0, 2.5], [2.3, 0, -2.5], [-2.3, 0, -2.5]];
+            poses.forEach(p => { const w = new THREE.Mesh(wGeo, wMat); w.rotation.z=Math.PI/2; w.position.set(...p); carGroup.add(w); });
+
             coasterCart.add(carGroup);
 
             const board = new THREE.Mesh(new THREE.BoxGeometry(16, 9, 0.5), createBrightMaterial());
-            board.position.set(0, 8, 20);
-            board.userData = { id: 'Coaster_Sign', isInteractable: true, desc: '招牌' };
+            board.position.set(0, 8, 20); board.userData = { id: 'Coaster_Sign', isInteractable: true, desc: '招牌' };
             group.add(board); interactables.push(board);
-            
-            const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,10), new THREE.MeshStandardMaterial({color:0x444})); p1.position.set(-7,5,20);
-            const p2 = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,10), new THREE.MeshStandardMaterial({color:0x444})); p2.position.set(7,5,20);
-            group.add(p1); group.add(p2); colliders.push(new THREE.Box3().setFromObject(p1));
+            const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,10), new THREE.MeshStandardMaterial({color:0x444})); p1.position.set(-7,5,20); group.add(p1);
         }
-
-        // Logic
-        promptEl.addEventListener('click', (e) => {
-            e.stopPropagation(); 
-            if(targetObj) {
-                if(targetObj.userData.isButton) toggleRide(targetObj.userData.rideId);
-                else if(targetObj.userData.isInteractable) uploadInput.click();
-            }
-        });
 
         function toggleRide(id) {
             rideStates[id] = !rideStates[id];
@@ -601,15 +424,15 @@
                     c.width=w;c.height=h; ctx.drawImage(img,0,0,w,h);
                     
                     new THREE.TextureLoader().load(c.toDataURL('image/jpeg',0.9), t => {
-                        t.colorSpace = THREE.SRGBColorSpace; // 確保圖片顏色正確
+                        t.colorSpace = THREE.SRGBColorSpace;
                         if(targetObj.geometry.type !== 'PlaneGeometry') t.flipY = true;
                         
                         targetObj.material.map = t;
                         targetObj.material.needsUpdate = true;
-                        targetObj.material.color.setHex(0xffffff); 
+                        targetObj.material.color.setHex(0xffffff);
                         
                         if(db) setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'objects', `tex_${targetObj.userData.id}`), {img:c.toDataURL('image/jpeg',0.8), t:serverTimestamp()}).catch(()=>{});
-                        alert('外觀更換成功！');
+                        alert('更換成功！');
                     });
                 }; img.src = ev.target.result;
             }; r.readAsDataURL(e.target.files[0]); uploadInput.value="";
@@ -623,21 +446,15 @@
                 setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'objects', `p_${currentUser.uid}`), 
                     {x:p.x, y:p.y, z:p.z, ry:camera.rotation.y, c:'#'+myColor, t:Date.now()}).catch(()=>{});
             }, 100);
+            
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'objects'), s => {
                 s.docChanges().forEach(c => {
                     const d=c.doc.data(); const id=c.doc.id;
-                    if(id.startsWith('p_') && id!==`p_${currentUser.uid}`) updatePlayer(id,d);
                     if(id.startsWith('tex_')) updateTexture(id.replace('tex_',''), d.img);
                 });
             });
         }
-        function updatePlayer(id, d) {
-            if(!otherPlayers[id]) {
-                const m = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 16), new THREE.MeshStandardMaterial({color:d.c}));
-                m.position.y=1; scene.add(m); otherPlayers[id]=m;
-            }
-            otherPlayers[id].position.set(d.x,0,d.z);
-        }
+
         function updateTexture(objId, img) {
             const obj = interactables.find(o => o.userData.id === objId);
             if(obj) {
@@ -649,6 +466,7 @@
             }
         }
 
+        // --- Controls & Mouse Interaction ---
         function setupControls() {
             document.addEventListener('keydown', e=>{
                 const k = e.key.toLowerCase();
@@ -659,11 +477,30 @@
                 if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) keys[k]=false;
             });
             
-            document.addEventListener('mousedown', () => isDragging = true);
+            // Mouse Drag to Look
+            document.addEventListener('mousedown', () => { isDragging = true; mouseMovedSinceClick = false; });
             document.addEventListener('mouseup', () => isDragging = false);
+            
             document.addEventListener('mousemove', e => {
+                // [關鍵] 更新滑鼠座標 (-1 ~ +1)
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
                 if(isDragging && !isMobile()) {
+                    mouseMovedSinceClick = true; // 標記有拖曳過，不是單純點擊
                     rotateCam(e.movementX, e.movementY);
+                }
+            });
+
+            // [關鍵] 全域點擊監聽 (Click to Interact)
+            document.addEventListener('click', (e) => {
+                // 如果是拖曳轉視角結束的放開，不算是點擊互動
+                if(mouseMovedSinceClick) return;
+
+                // 如果滑鼠指標下有目標物件，直接觸發
+                if(targetObj) {
+                    if(targetObj.userData.isButton) toggleRide(targetObj.userData.rideId);
+                    else if(targetObj.userData.isInteractable) uploadInput.click();
                 }
             });
 
@@ -678,6 +515,7 @@
             }, {passive:false});
             lookZone.addEventListener('touchend', ()=>lookActive=false);
         }
+
         function updateJoy(t) {
             const r = joystickZone.getBoundingClientRect();
             const dx = t.clientX-(r.left+r.width/2); const dy = t.clientY-(r.top+r.height/2);
@@ -692,27 +530,15 @@
             camera.quaternion.setFromEuler(lookEuler);
         }
 
-        function updateMoveVector() {
-            moveVector.set(0,0,0);
-            if(keys.w || keys.arrowup) moveVector.z = -1;
-            if(keys.s || keys.arrowdown) moveVector.z = 1;
-            if(keys.a || keys.arrowleft) moveVector.x = -1;
-            if(keys.d || keys.arrowright) moveVector.x = 1;
-        }
-
         function animate() {
             requestAnimationFrame(animate);
             if(!isRunning) return;
 
             if(rideStates.carousel && carouselRot) carouselRot.rotation.y += 0.01;
-
             if(rideStates.ferris && ferrisRot) {
                 ferrisRot.rotation.x -= 0.005; 
-                ferrisRot.children.forEach(c => {
-                    if(c.userData.isCabinPivot) c.rotation.x += 0.005; 
-                });
+                ferrisRot.children.forEach(c => { if(c.userData.isCabinPivot) c.rotation.x += 0.005; });
             }
-
             if(rideStates.teacups && cupRot) {
                 cupRot.rotation.y -= 0.015;
                 cupRot.children.forEach(c => {
@@ -720,19 +546,21 @@
                     if(cupMesh) cupMesh.rotation.y += cupMesh.userData.spinSpeed;
                 });
             }
-
             if(rideStates.coaster && coasterCart) {
-                coasterProgress += 0.002;
-                if(coasterProgress > 1) coasterProgress = 0;
+                coasterProgress += 0.002; if(coasterProgress > 1) coasterProgress = 0;
                 const path = coasterCart.userData.path;
                 const pos = path.getPointAt(coasterProgress);
                 const tangent = path.getTangentAt(coasterProgress);
-                coasterCart.position.copy(pos);
-                coasterCart.lookAt(pos.clone().add(tangent));
+                coasterCart.position.copy(pos); coasterCart.lookAt(pos.clone().add(tangent));
             }
 
-            // Keyboard update
-            if(!joystickActive) updateMoveVector();
+            if(!joystickActive) {
+                moveVector.set(0,0,0);
+                if(keys.w || keys.arrowup) moveVector.z = -1;
+                if(keys.s || keys.arrowdown) moveVector.z = 1;
+                if(keys.a || keys.arrowleft) moveVector.x = -1;
+                if(keys.d || keys.arrowright) moveVector.x = 1;
+            }
 
             if(moveVector.lengthSq()>0) {
                 const s = 0.4;
@@ -743,33 +571,36 @@
                 if(!hit) camera.position.copy(next);
             }
 
-            raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+            // [關鍵] Raycaster 使用滑鼠位置 (電腦版) 或 畫面中心 (手機版)
+            // 手機版 (Touch) 沒有 hover 概念，所以保持中心點偵測比較好操控
+            if(isMobile()) {
+                 raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+            } else {
+                 raycaster.setFromCamera(mouse, camera);
+            }
+
             const hits = raycaster.intersectObjects([...interactables, ...buttons]);
             
-            // 互動時只稍微變暗一點，不蓋過白色
-            interactables.forEach(o => { 
-                if(o.material.emissive) o.material.emissive.setHex(0x000000); 
-            });
-            buttons.forEach(b => { 
-                const isActive = rideStates[b.userData.rideId];
-                b.material.emissive.setHex(isActive ? 0x440000 : 0x004400); 
-            });
+            interactables.forEach(o => { if(o.material.emissive) o.material.emissive.setHex(0x000000); });
+            buttons.forEach(b => { b.material.emissive.setHex(rideStates[b.userData.rideId] ? 0x440000 : 0x004400); });
 
-            if(hits.length>0 && hits[0].distance<40) { 
+            if(hits.length>0 && hits[0].distance<50) { // 稍微增加感應距離
                 const obj = hits[0].object;
                 targetObj = obj;
+                document.body.style.cursor = 'pointer'; // 鼠標變手指
+                
                 promptEl.style.display='block';
                 if(obj.userData.isButton) {
                     const state = rideStates[obj.userData.rideId];
-                    promptEl.innerText = state ? `🔴 停止設施` : `🟢 啟動設施`;
+                    promptEl.innerText = state ? `🔴 點擊停止` : `🟢 點擊啟動`;
                     obj.material.emissive.setHex(state ? 0xff0000 : 0x00ff00);
                 } else if(obj.userData.isInteractable) {
-                    promptEl.innerText = `🖼️ 更換 (${obj.userData.desc})`;
-                    // 滑鼠指到時稍微變亮一點灰
-                    if(obj.material.emissive) obj.material.emissive.setHex(0x222222);
+                    promptEl.innerText = `🖼️ 點擊更換 (${obj.userData.desc})`;
+                    if(obj.material.emissive) obj.material.emissive.setHex(0x222222); // Hover 亮起
                 }
             } else {
                 targetObj = null;
+                document.body.style.cursor = 'default'; // 鼠標變回箭頭
                 promptEl.style.display='none';
             }
 
