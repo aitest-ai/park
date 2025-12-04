@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>夢幻遊樂園 (超順手互動版)</title>
+    <title>夢幻遊樂園 (近距離互動版)</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Microsoft JhengHei', sans-serif; background-color: #87CEEB; user-select: none; -webkit-user-select: none; }
         
@@ -78,7 +78,7 @@
 
     <div id="start-screen">
         <h1>DREAMLAND</h1>
-        <p class="subtitle">超順手互動版</p>
+        <p class="subtitle">近距離互動版</p>
         <button id="start-btn">開始創作</button>
     </div>
 
@@ -89,7 +89,7 @@
             <b>操作說明</b><br>
             移動：WASD 或 方向鍵<br>
             視角：按住滑鼠左鍵拖曳<br>
-            互動：滑鼠直接點擊物件
+            互動：請走近物件後點擊
         </div>
     </div>
 
@@ -104,7 +104,7 @@
         import { getFirestore, collection, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Config
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'amusement-park-tolerance-fix';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'amusement-park-distance-fix';
         let firebaseConfig;
         
         if (typeof __firebase_config !== 'undefined') {
@@ -199,7 +199,6 @@
         let joystickActive=false, lookActive=false, lastLookX=0, lastLookY=0;
         let isDragging = false;
         
-        // [修改] 用於判斷點擊還是拖曳
         let mouseDownX = 0;
         let mouseDownY = 0;
         const mouse = new THREE.Vector2();
@@ -316,7 +315,6 @@
                 
                 const uniqueMatBody = new THREE.MeshStandardMaterial({color: 0xffffff});
 
-                // Parts
                 const parts = [];
                 parts.push(new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1.6, 4, 8), uniqueMatBody)); parts[0].rotation.z = Math.PI/2;
                 
@@ -337,7 +335,6 @@
                 const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.2, 1), matMane);
                 tail.position.set(-1.0, 0.3, 0); tail.rotation.z = Math.PI/1.5; horse.add(tail);
 
-                // Add Parts to Scene & Interactive List
                 parts.forEach(p => { p.userData = { id: `Carousel_Horse_${i}`, isInteractable: true, desc: '木馬' }; interactables.push(p); horse.add(p); });
                 headMain.userData = { id: `Carousel_Horse_${i}`, isInteractable: true, desc: '木馬' }; interactables.push(headMain);
                 snout.userData = { id: `Carousel_Horse_${i}`, isInteractable: true, desc: '木馬' }; interactables.push(snout);
@@ -500,16 +497,18 @@
             }
         }
 
-        // --- [關鍵修正] Controls & Click Tolerance ---
         function setupControls() {
-            // Keyboard
-            document.addEventListener('keydown', e=>{ const k=e.key.toLowerCase(); if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) keys[k]=true; });
-            document.addEventListener('keyup', e=>{ const k=e.key.toLowerCase(); if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) keys[k]=false; });
+            document.addEventListener('keydown', e=>{
+                const k = e.key.toLowerCase();
+                if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) keys[k]=true;
+            });
+            document.addEventListener('keyup', e=>{
+                const k = e.key.toLowerCase();
+                if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) keys[k]=false;
+            });
             
-            // Mouse Look & Click Detection
             document.addEventListener('mousedown', (e) => {
                 isDragging = true;
-                // 記錄按下時的座標
                 mouseDownX = e.clientX;
                 mouseDownY = e.clientY;
             });
@@ -524,22 +523,16 @@
                 }
             });
 
-            // [核心邏輯] 點擊判定
             document.addEventListener('click', (e) => {
-                // 計算按下與放開的距離
                 const dist = Math.sqrt(Math.pow(e.clientX - mouseDownX, 2) + Math.pow(e.clientY - mouseDownY, 2));
-                
-                // 如果移動距離大於 5 像素，視為拖曳，不觸發點擊
                 if(dist > 5) return;
 
-                // 距離小於 5，視為有效點擊，檢查是否有指到物件
                 if(targetObj) {
                     if(targetObj.userData.isButton) toggleRide(targetObj.userData.rideId);
                     else if(targetObj.userData.isInteractable) uploadInput.click();
                 }
             });
 
-            // Touch
             joystickZone.addEventListener('touchstart', e=>{joystickActive=true; updateJoy(e.touches[0]);}, {passive:false});
             joystickZone.addEventListener('touchmove', e=>{if(joystickActive) updateJoy(e.touches[0]); e.preventDefault();}, {passive:false});
             joystickZone.addEventListener('touchend', ()=>{joystickActive=false; joystickKnob.style.transform=`translate(-50%,-50%)`; moveVector.set(0,0,0);});
@@ -627,7 +620,8 @@
             interactables.forEach(o => { if(o.material.emissive) o.material.emissive.setHex(0x000000); });
             buttons.forEach(b => { b.material.emissive.setHex(rideStates[b.userData.rideId] ? 0x440000 : 0x004400); });
 
-            if(hits.length>0 && hits[0].distance<50) {
+            // [修改] 偵測距離從 50 縮短為 20 (近距離互動)
+            if(hits.length>0 && hits[0].distance<20) {
                 const obj = hits[0].object;
                 targetObj = obj;
                 document.body.style.cursor = 'pointer'; 
