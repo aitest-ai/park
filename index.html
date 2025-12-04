@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>夢幻遊樂園 (近距離互動版)</title>
+    <title>夢幻遊樂園 (精準按鈕版)</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Microsoft JhengHei', sans-serif; background-color: #87CEEB; user-select: none; -webkit-user-select: none; }
         
@@ -26,22 +26,23 @@
 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         
-        #interaction-prompt {
+        /* [修改] 按鈕樣式：更像一個可點擊的按鈕 */
+        #interaction-btn {
             position: absolute; top: 0; left: 0;
-            transform: translate(-50%, -120%); 
-            background: rgba(0, 0, 0, 0.8); color: #fff; padding: 8px 16px;
-            font-size: 14px; border-radius: 8px; font-weight: bold;
-            display: none; pointer-events: none;
-            white-space: nowrap; z-index: 20;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(4px);
+            transform: translate(-50%, -50%); 
+            background: #FFD700; color: #333; padding: 10px 25px;
+            font-size: 16px; border-radius: 50px; font-weight: bold;
+            display: none; 
+            pointer-events: auto; /* 關鍵：讓按鈕可以被滑鼠點擊 */
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 3px solid #fff;
+            white-space: nowrap;
+            z-index: 100;
+            transition: transform 0.1s, opacity 0.2s;
         }
-        #interaction-prompt::after {
-            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px;
-            border-width: 6px; border-style: solid;
-            border-color: rgba(0,0,0,0.8) transparent transparent transparent;
-        }
+        #interaction-btn:hover { transform: translate(-50%, -50%) scale(1.1); background: #FFC107; }
+        #interaction-btn:active { transform: translate(-50%, -50%) scale(0.95); }
 
         #status {
             position: absolute; top: 20px; left: 20px;
@@ -78,18 +79,19 @@
 
     <div id="start-screen">
         <h1>DREAMLAND</h1>
-        <p class="subtitle">近距離互動版</p>
+        <p class="subtitle">精準按鈕版</p>
         <button id="start-btn">開始創作</button>
     </div>
 
     <div id="ui-layer">
         <div id="status">● 準備就緒</div>
-        <div id="interaction-prompt">✨ 互動</div>
+        <div id="interaction-btn">✨ 點此互動</div>
+        
         <div id="controls-hint">
             <b>操作說明</b><br>
             移動：WASD 或 方向鍵<br>
             視角：按住滑鼠左鍵拖曳<br>
-            互動：請走近物件後點擊
+            互動：滑鼠移到物件 -> 點擊黃色按鈕
         </div>
     </div>
 
@@ -104,9 +106,8 @@
         import { getFirestore, collection, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Config
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'amusement-park-distance-fix';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'amusement-park-floating-btn';
         let firebaseConfig;
-        
         if (typeof __firebase_config !== 'undefined') {
             firebaseConfig = JSON.parse(__firebase_config);
         } else {
@@ -140,7 +141,7 @@
         const startScreen = document.getElementById('start-screen');
         const startBtn = document.getElementById('start-btn');
         const statusEl = document.getElementById('status');
-        const promptEl = document.getElementById('interaction-prompt');
+        const btnEl = document.getElementById('interaction-btn');
         const uploadInput = document.getElementById('upload-input');
         const joystickZone = document.getElementById('joystick-zone');
         const joystickKnob = document.getElementById('joystick-knob');
@@ -193,14 +194,15 @@
         let buttons = [];
         let colliders = [];
         let raycaster;
+        // targetObj: 目前「可能」被選中的物件
         let targetObj = null;
         let moveVector = new THREE.Vector3();
         let lookEuler = new THREE.Euler(0,0,0,'YXZ');
         let joystickActive=false, lookActive=false, lastLookX=0, lastLookY=0;
         let isDragging = false;
         
-        let mouseDownX = 0;
-        let mouseDownY = 0;
+        // [新增] 判斷滑鼠是否正在按鈕上
+        let isHoveringButton = false;
         const mouse = new THREE.Vector2();
 
         const rideStates = { carousel: false, ferris: false, teacups: false, coaster: false };
@@ -498,21 +500,10 @@
         }
 
         function setupControls() {
-            document.addEventListener('keydown', e=>{
-                const k = e.key.toLowerCase();
-                if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) keys[k]=true;
-            });
-            document.addEventListener('keyup', e=>{
-                const k = e.key.toLowerCase();
-                if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) keys[k]=false;
-            });
+            document.addEventListener('keydown', e=>{ const k=e.key.toLowerCase(); if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) keys[k]=true; });
+            document.addEventListener('keyup', e=>{ const k=e.key.toLowerCase(); if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) keys[k]=false; });
             
-            document.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                mouseDownX = e.clientX;
-                mouseDownY = e.clientY;
-            });
-            
+            document.addEventListener('mousedown', () => { isDragging = true; });
             document.addEventListener('mouseup', () => { isDragging = false; });
             
             document.addEventListener('mousemove', e => {
@@ -523,10 +514,16 @@
                 }
             });
 
-            document.addEventListener('click', (e) => {
-                const dist = Math.sqrt(Math.pow(e.clientX - mouseDownX, 2) + Math.pow(e.clientY - mouseDownY, 2));
-                if(dist > 5) return;
+            // [關鍵] 僅按鈕負責點擊互動，這裡移除全域點擊事件
+            // 按鈕的點擊監聽寫在下面
 
+            // [新增] 按鈕的 Hover 狀態監聽
+            btnEl.addEventListener('mouseenter', () => isHoveringButton = true);
+            btnEl.addEventListener('mouseleave', () => isHoveringButton = false);
+            
+            // [新增] 按鈕點擊觸發功能
+            btnEl.addEventListener('click', (e) => {
+                e.stopPropagation(); // 防止冒泡
                 if(targetObj) {
                     if(targetObj.userData.isButton) toggleRide(targetObj.userData.rideId);
                     else if(targetObj.userData.isInteractable) uploadInput.click();
@@ -609,44 +606,64 @@
                 if(!hit) camera.position.copy(next);
             }
 
-            if(isMobile()) {
-                 raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-            } else {
-                 raycaster.setFromCamera(mouse, camera);
-            }
+            if(isMobile()) raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+            else raycaster.setFromCamera(mouse, camera);
 
             const hits = raycaster.intersectObjects([...interactables, ...buttons]);
             
+            // 每次重新渲染前先還原所有物件的 emissive
             interactables.forEach(o => { if(o.material.emissive) o.material.emissive.setHex(0x000000); });
             buttons.forEach(b => { b.material.emissive.setHex(rideStates[b.userData.rideId] ? 0x440000 : 0x004400); });
 
-            // [修改] 偵測距離從 50 縮短為 20 (近距離互動)
-            if(hits.length>0 && hits[0].distance<20) {
-                const obj = hits[0].object;
-                targetObj = obj;
-                document.body.style.cursor = 'pointer'; 
-                
-                const vec = hits[0].point.clone();
-                vec.project(camera);
-                const x = (vec.x * 0.5 + 0.5) * window.innerWidth;
-                const y = (-(vec.y * 0.5) + 0.5) * window.innerHeight;
+            // [關鍵邏輯]
+            // 如果射線有打到東西，更新 targetObj
+            // 如果射線沒打到東西，但滑鼠在按鈕上 (isHoveringButton)，保持 targetObj 不變 (防抖)
+            let hitObj = null;
+            if(hits.length>0 && hits[0].distance<30) {
+                hitObj = hits[0].object;
+            }
 
-                promptEl.style.display = 'block';
-                promptEl.style.left = `${x}px`;
-                promptEl.style.top = `${y}px`; 
+            if (hitObj) {
+                // 有打到東西 -> 更新目標
+                targetObj = hitObj;
+            } else if (!isHoveringButton) {
+                // 沒打到東西 且 沒在按鈕上 -> 清除目標
+                targetObj = null;
+            }
+            // 如果 沒打到東西 但 在按鈕上 -> targetObj 保持原本的 (所以不用寫 else)
 
-                if(obj.userData.isButton) {
-                    const state = rideStates[obj.userData.rideId];
-                    promptEl.innerText = state ? `🔴 點擊停止` : `🟢 點擊啟動`;
-                    obj.material.emissive.setHex(state ? 0xff0000 : 0x00ff00);
-                } else if(obj.userData.isInteractable) {
-                    promptEl.innerText = `🖼️ ${obj.userData.desc}`;
-                    if(obj.material.emissive) obj.material.emissive.setHex(0x222222);
+            if (targetObj) {
+                // 視覺回饋：讓物件發光
+                if (targetObj.userData.isInteractable) {
+                    if (targetObj.material.emissive) targetObj.material.emissive.setHex(0x222222);
+                }
+
+                // 計算並移動按鈕位置
+                // 為了避免按鈕在物件移動時跟丟，我們重新計算一次 targetObj 的位置
+                // 取得物件的世界座標
+                const worldPos = new THREE.Vector3();
+                targetObj.getWorldPosition(worldPos);
+                worldPos.project(camera); // 轉為 NDC (-1~1)
+
+                const x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-(worldPos.y * 0.5) + 0.5) * window.innerHeight;
+
+                btnEl.style.display = 'block';
+                btnEl.style.left = `${x}px`;
+                btnEl.style.top = `${y}px`;
+
+                if(targetObj.userData.isButton) {
+                    const state = rideStates[targetObj.userData.rideId];
+                    btnEl.innerText = state ? `🔴 停止` : `🟢 啟動`;
+                    btnEl.style.background = state ? '#ff4444' : '#44ff44';
+                    btnEl.style.color = '#fff';
+                } else if(targetObj.userData.isInteractable) {
+                    btnEl.innerText = `🖼️ 更換${targetObj.userData.desc}`;
+                    btnEl.style.background = '#FFD700';
+                    btnEl.style.color = '#333';
                 }
             } else {
-                targetObj = null;
-                document.body.style.cursor = 'default';
-                promptEl.style.display='none';
+                btnEl.style.display = 'none';
             }
 
             renderer.render(scene, camera);
